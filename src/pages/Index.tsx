@@ -90,7 +90,7 @@ const Index = () => {
               <motion.img 
                 src={godmodeLogo} 
                 alt="" 
-                className="absolute inset-0 mx-auto w-full max-w-[260px] h-auto pointer-events-none"
+                className="absolute inset-0 mx-auto w-full max-w-[200px] md:max-w-[260px] h-auto pointer-events-none"
                 style={{ 
                   mixBlendMode: 'screen',
                   filter: 'hue-rotate(-40deg) saturate(4) brightness(1.3) contrast(1.2)',
@@ -113,7 +113,7 @@ const Index = () => {
               <motion.img 
                 src={godmodeLogo} 
                 alt="" 
-                className="absolute inset-0 mx-auto w-full max-w-[260px] h-auto pointer-events-none"
+                className="absolute inset-0 mx-auto w-full max-w-[200px] md:max-w-[260px] h-auto pointer-events-none"
                 style={{ 
                   mixBlendMode: 'screen',
                   filter: 'hue-rotate(40deg) saturate(4) brightness(1.3) contrast(1.2)',
@@ -136,7 +136,7 @@ const Index = () => {
               <motion.img 
                 src={godmodeLogo} 
                 alt="" 
-                className="absolute inset-0 mx-auto w-full max-w-[260px] h-auto pointer-events-none"
+                className="absolute inset-0 mx-auto w-full max-w-[200px] md:max-w-[260px] h-auto pointer-events-none"
                 style={{ 
                   mixBlendMode: 'screen',
                   filter: 'hue-rotate(100deg) saturate(3.5) brightness(1.2)',
@@ -159,7 +159,7 @@ const Index = () => {
               <motion.img 
                 src={godmodeLogo} 
                 alt="TheGodMode Logo" 
-                className="relative mx-auto w-full max-w-[260px] h-auto drop-shadow-2xl"
+                className="relative mx-auto w-full max-w-[200px] md:max-w-[260px] h-auto drop-shadow-2xl"
                 style={{ filter: 'drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5))' }}
                 animate={{
                   x: [0, 0, 0, 2, 0, -1, 0, 0, 0],
