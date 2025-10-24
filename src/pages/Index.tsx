@@ -1,30 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Instagram, ArrowRight } from "lucide-react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import godmodeLogo from "@/assets/godmode-logo.svg";
 import backgroundImage from "@/assets/background.png";
-import { useRef } from "react";
 
 const Index = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"]
-  });
-
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.9]);
-
   return (
-    <main ref={containerRef} className="relative min-h-screen w-full overflow-hidden bg-background">
+    <main className="relative min-h-screen w-full overflow-hidden bg-background">
       {/* Animated Background */}
       <div className="fixed inset-0 z-0">
-        <motion.div 
+        <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ 
             backgroundImage: `url(${backgroundImage})`,
-            opacity,
-            scale
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/97 via-background/98 to-background" />
