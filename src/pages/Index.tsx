@@ -27,10 +27,10 @@ const Index = () => {
             scale
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/94 via-background/96 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/97 via-background/98 to-background" />
         
         {/* Mesh Gradient Overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(8_86%_53%_/_0.15),transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(8_86%_53%_/_0.12),transparent)]" />
         
         {/* Animated Orbs */}
         <motion.div 
@@ -116,7 +116,7 @@ const Index = () => {
                 transition={{ delay: 0.8, duration: 0.6 }}
               />
               <motion.h1 
-                className="text-sm md:text-base font-light uppercase tracking-[0.4em] text-foreground/70"
+                className="text-sm md:text-base font-light uppercase tracking-[0.4em] text-foreground/90"
                 initial={{ opacity: 0, letterSpacing: "0.2em" }}
                 animate={{ opacity: 1, letterSpacing: "0.4em" }}
                 transition={{ delay: 0.9, duration: 0.8 }}
@@ -156,7 +156,7 @@ const Index = () => {
                 </h2>
               </motion.div>
               <motion.p 
-                className="text-xs md:text-sm text-muted-foreground font-light tracking-[0.3em] uppercase"
+                className="text-xs md:text-sm text-foreground/70 font-light tracking-[0.3em] uppercase"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.3, duration: 0.8 }}
@@ -166,7 +166,7 @@ const Index = () => {
             </div>
 
             <motion.p 
-              className="text-sm md:text-base text-foreground/60 max-w-lg mx-auto leading-relaxed font-light"
+              className="text-sm md:text-base text-foreground/80 max-w-lg mx-auto leading-relaxed font-light"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.4, duration: 0.8 }}
@@ -208,7 +208,7 @@ const Index = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 1.7, duration: 1 }}
           >
-            <p className="text-xs text-muted-foreground/50 font-light tracking-[0.2em] uppercase">
+            <p className="text-xs text-foreground/50 font-light tracking-[0.2em] uppercase">
               Website Launching Soon
             </p>
           </motion.div>
