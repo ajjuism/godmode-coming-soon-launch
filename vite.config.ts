@@ -19,35 +19,13 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // Optimize chunk splitting for better caching and faster loading
+    // Simplified chunk splitting to avoid React context issues
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // Vendor chunks
-          if (id.includes('node_modules')) {
-            // React core
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'react-vendor';
-            }
-            // Framer Motion - separate chunk due to size
-            if (id.includes('framer-motion')) {
-              return 'framer-motion';
-            }
-            // Radix UI components
-            if (id.includes('@radix-ui')) {
-              return 'radix-ui';
-            }
-            // Other UI libraries
-            if (id.includes('lucide-react') || id.includes('sonner')) {
-              return 'ui-libs';
-            }
-            // Query and form libraries
-            if (id.includes('@tanstack') || id.includes('react-hook-form')) {
-              return 'query-form';
-            }
-            // Everything else
-            return 'vendor';
-          }
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'framer-motion': ['framer-motion'],
+          'ui-components': ['lucide-react', '@radix-ui/react-toast', '@radix-ui/react-dialog', '@radix-ui/react-label', 'sonner'],
         },
         // Optimize asset file names for caching
         assetFileNames: (assetInfo) => {
