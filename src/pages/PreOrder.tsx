@@ -258,7 +258,7 @@ const PreOrder = () => {
     
     try {
       const orderDetails = `
-🛍️ *GodDrip01 Pre-Order Confirmation*
+🛍️ *GodDrip01 Pre-Order Request*
 
 📦 *Order Details:*
 Variant: ${formData.variant}
