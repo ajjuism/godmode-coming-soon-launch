@@ -1,11 +1,67 @@
 import { Button } from "@/components/ui/button";
-import { Instagram, ArrowRight } from "lucide-react";
+import { MessageCircle, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import backgroundImage from "@/assets/background.png";
 
 const godmodeLogo = "/godmode-logo-svg 1.png";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const loadingScreenRemoved = useRef(false);
+
+  useEffect(() => {
+    // Preload critical images
+    const imagesToLoad = [godmodeLogo, backgroundImage];
+    let loadedCount = 0;
+
+    const removeLoadingScreen = () => {
+      if (!loadingScreenRemoved.current) {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen && loadingScreen.parentNode) {
+          loadingScreen.classList.add('loaded');
+          // Remove from DOM after transition
+          setTimeout(() => {
+            if (loadingScreen.parentNode) {
+              loadingScreen.remove();
+            }
+          }, 500);
+          loadingScreenRemoved.current = true;
+        }
+      }
+    };
+
+    const checkAllLoaded = () => {
+      loadedCount++;
+      if (loadedCount === imagesToLoad.length) {
+        // Small delay to ensure smooth transition
+        setTimeout(() => {
+          setImagesLoaded(true);
+          removeLoadingScreen();
+        }, 100);
+      }
+    };
+
+    imagesToLoad.forEach(src => {
+      const img = new Image();
+      img.onload = checkAllLoaded;
+      img.onerror = checkAllLoaded; // Still proceed even if image fails
+      img.src = src;
+    });
+
+    // Fallback: show content after 3 seconds even if images haven't loaded
+    const fallbackTimer = setTimeout(() => {
+      setImagesLoaded(true);
+      removeLoadingScreen();
+    }, 3000);
+
+    return () => {
+      clearTimeout(fallbackTimer);
+    };
+  }, []);
+
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-background">
       {/* Animated Background */}
@@ -96,6 +152,8 @@ const Index = () => {
                   filter: 'hue-rotate(-40deg) saturate(4) brightness(1.3) contrast(1.2)',
                   opacity: 0
                 }}
+                decoding="async"
+                loading="eager"
                 animate={{
                   opacity: [0, 0, 0, 0.75, 0, 0.8, 0, 0, 0, 0],
                   x: [0, 0, 0, -10, 0, -6, 0, 0, 0, 0],
@@ -119,6 +177,8 @@ const Index = () => {
                   filter: 'hue-rotate(40deg) saturate(4) brightness(1.3) contrast(1.2)',
                   opacity: 0
                 }}
+                decoding="async"
+                loading="eager"
                 animate={{
                   opacity: [0, 0, 0, 0.75, 0, 0.8, 0, 0, 0, 0],
                   x: [0, 0, 0, 10, 0, 7, 0, 0, 0, 0],
@@ -142,6 +202,8 @@ const Index = () => {
                   filter: 'hue-rotate(100deg) saturate(3.5) brightness(1.2)',
                   opacity: 0
                 }}
+                decoding="async"
+                loading="eager"
                 animate={{
                   opacity: [0, 0, 0, 0, 0.5, 0, 0.6, 0, 0, 0],
                   x: [0, 0, 0, 0, -4, 0, 5, 0, 0, 0],
@@ -161,6 +223,8 @@ const Index = () => {
                 alt="TheGodMode Logo" 
                 className="relative mx-auto w-full max-w-[200px] md:max-w-[260px] h-auto drop-shadow-2xl"
                 style={{ filter: 'drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5))' }}
+                decoding="async"
+                loading="eager"
                 animate={{
                   x: [0, 0, 0, 2, 0, -1, 0, 0, 0],
                   skewX: [0, 0, 0, 1, 0, -0.5, 0, 0, 0],
@@ -286,10 +350,10 @@ const Index = () => {
                   boxShadow: '0 0 40px rgba(255, 68, 68, 0.5), 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
                   borderColor: 'rgba(255, 100, 100, 0.5)',
                 }}
-                onClick={() => window.open('https://www.instagram.com/thegodmode.in/', '_blank')}
+                onClick={() => navigate('/preorder')}
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 rounded-full" />
-                <Instagram className="w-4 h-4 relative z-10" />
+                <MessageCircle className="w-4 h-4 relative z-10" />
                 <span className="relative z-10 font-semibold">Preorder Now</span>
                 <ArrowRight className="w-4 h-4 relative z-10 group-hover:translate-x-1 transition-transform duration-300" />
               </Button>

@@ -6,9 +6,14 @@
     <title>TheGodMode - Coming Soon | Godrip01 Available Now</title>
     <meta name="description" content="TheGodMode clothing brand. Bold streetwear, premium quality." />
     <meta name="author" content="TheGodMode" />
+    <!-- Preconnect to font sources for faster loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" as="image" href="/godmode-logo-svg 1.png" fetchpriority="high">
+    <link rel="preload" as="image" href="/src/assets/background.png" fetchpriority="high">
 
     <meta property="og:title" content="TheGodMode - Coming Soon | Godrip01 Available Now" />
     <meta property="og:description" content="TheGodMode clothing brand. Bold streetwear, premium quality." />
@@ -21,6 +26,37 @@
 
   <body>
     <div id="root"></div>
+    <!-- Loading indicator -->
+    <style>
+      #loading-screen {
+        position: fixed;
+        inset: 0;
+        background: #0a0a0a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease-out;
+      }
+      #loading-screen.loaded {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .loader {
+        width: 48px;
+        height: 48px;
+        border: 3px solid rgba(255, 68, 68, 0.2);
+        border-top-color: #FF4444;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+    <div id="loading-screen">
+      <div class="loader"></div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
