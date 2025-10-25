@@ -71,10 +71,12 @@ export default defineConfig(({ mode }) => ({
     minify: 'esbuild',
     // Improve build performance
     cssCodeSplit: true,
-    sourcemap: mode === 'development',
+    sourcemap: false, // Disable sourcemaps for production
     // Reduce bundle size
     target: 'es2015',
     reportCompressedSize: false, // Faster builds
+    // Ensure proper base path for Vercel
+    outDir: 'dist',
   },
   // Optimize dependencies
   optimizeDeps: {
