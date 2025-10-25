@@ -146,8 +146,40 @@ const PreOrder = () => {
     transactionId: "",
   });
 
+  // Validation states
+  const [validationErrors, setValidationErrors] = useState({
+    postalCode: "",
+    phone: "",
+  });
+
+  // Validation functions
+  const validatePostalCode = (value: string): string => {
+    if (!value) return "";
+    if (!/^\d{6}$/.test(value)) {
+      return "Pincode must be exactly 6 digits";
+    }
+    return "";
+  };
+
+  const validatePhone = (value: string): string => {
+    if (!value) return "";
+    if (!/^\d{10}$/.test(value)) {
+      return "Phone number must be exactly 10 digits";
+    }
+    return "";
+  };
+
   const handleInputChange = useCallback((field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Validate specific fields
+    if (field === "postalCode") {
+      const error = validatePostalCode(value);
+      setValidationErrors(prev => ({ ...prev, postalCode: error }));
+    } else if (field === "phone") {
+      const error = validatePhone(value);
+      setValidationErrors(prev => ({ ...prev, phone: error }));
+    }
   }, []);
 
   // Scroll to top when step changes
@@ -203,9 +235,11 @@ const PreOrder = () => {
       formData.postalCode &&
       formData.country &&
       formData.phone &&
-      formData.transactionId
+      formData.transactionId &&
+      validationErrors.postalCode === "" &&
+      validationErrors.phone === ""
     );
-  }, [formData.name, formData.street, formData.city, formData.state, formData.postalCode, formData.country, formData.phone, formData.transactionId]);
+  }, [formData.name, formData.street, formData.city, formData.state, formData.postalCode, formData.country, formData.phone, formData.transactionId, validationErrors.postalCode, validationErrors.phone]);
 
   // Memoized price calculations
   const priceCalculations = useMemo(() => ({
@@ -974,10 +1008,18 @@ ${formData.country}
                           id="phone"
                           type="tel"
                           value={formData.phone}
-                          onChange={(e) => handleInputChange("phone", e.target.value)}
-                          placeholder="+91 XXXXXXXXXX"
-                          className="mt-1 h-9"
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+                            if (value.length <= 10) {
+                              handleInputChange("phone", value);
+                            }
+                          }}
+                          placeholder="Enter 10-digit phone number"
+                          className={`mt-1 h-9 ${validationErrors.phone ? 'border-red-500' : ''}`}
                         />
+                        {validationErrors.phone && (
+                          <p className="text-xs text-red-500 mt-1">{validationErrors.phone}</p>
+                        )}
                       </div>
                     </div>
 
@@ -1021,10 +1063,18 @@ ${formData.country}
                         <Input
                           id="postalCode"
                           value={formData.postalCode}
-                          onChange={(e) => handleInputChange("postalCode", e.target.value)}
-                          placeholder="000000"
-                          className="mt-1 h-9"
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, ''); // Only allow digits
+                            if (value.length <= 6) {
+                              handleInputChange("postalCode", value);
+                            }
+                          }}
+                          placeholder="Enter 6-digit pincode"
+                          className={`mt-1 h-9 ${validationErrors.postalCode ? 'border-red-500' : ''}`}
                         />
+                        {validationErrors.postalCode && (
+                          <p className="text-xs text-red-500 mt-1">{validationErrors.postalCode}</p>
+                        )}
                       </div>
                       <div>
                         <Label htmlFor="country" className="text-xs">Country *</Label>
