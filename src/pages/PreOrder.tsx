@@ -1048,9 +1048,8 @@ ${formData.country}
                       id="transactionId"
                       value={formData.transactionId}
                       onChange={(e) => handleInputChange("transactionId", e.target.value)}
-                      placeholder="Enter 12-digit transaction ID"
+                      placeholder="Enter transaction ID"
                       className="mt-2 h-10 bg-background"
-                      maxLength={12}
                     />
                     <p className="text-xs text-foreground/50 mt-2">
                       💡 Find this in your payment app after completing the transaction
