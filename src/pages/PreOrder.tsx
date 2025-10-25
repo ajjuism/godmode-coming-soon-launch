@@ -2,9 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { ArrowLeft, ArrowRight, MessageCircle, Minus, Plus, Phone, Ruler } from "lucide-react";
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from "react";
+import { ArrowLeft, ArrowRight, MessageCircle, Minus, Plus, Phone, Ruler, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import backgroundImage from "@/assets/background.png";
 import { toast } from "sonner";
 import {
@@ -15,9 +16,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
-const godmodeLogo = "/godmode-logo-svg 1.png";
-const tshirtImage = "/tshirt Image.jpeg";
+const godmodeLogo = "/logo.png";
+const productImages = [
+  "/GodMode (2).png",
+  "/GodMode (3).png",
+  "/GodModeCult (3).png",
+  "/GodModeCult (4).png",
+];
 const qrCodeImage = "/QR.PNG";
 
 const SIZES = ["S", "M", "L", "XL", "XXL"];
@@ -33,12 +46,56 @@ const formatCurrency = (amount: number): string => {
   return amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
+// Image component with loading state - Memoized for better performance
+const ImageWithLoading = memo(({ src, alt, className = "" }: { src: string; alt: string; className?: string }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
+  return (
+    <div className="relative w-full h-full">
+      {isLoading && !hasError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      )}
+      {hasError ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+          <p className="text-sm text-foreground/60">Failed to load image</p>
+        </div>
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          className={className}
+          onLoad={() => setIsLoading(false)}
+          onError={() => {
+            setIsLoading(false);
+            setHasError(true);
+          }}
+          loading="lazy"
+          decoding="async"
+          style={{ opacity: isLoading ? 0 : 1, transition: "opacity 0.3s ease-in-out" }}
+        />
+      )}
+    </div>
+  );
+});
+
 const PreOrder = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sizeChartOpen, setSizeChartOpen] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [carouselApi, setCarouselApi] = useState<any>(null);
   const loadingScreenRemoved = useRef(false);
+  const isMobile = useIsMobile();
+  
+  // Reduce animation complexity on mobile
+  const animationConfig = useMemo(() => ({
+    enableOrbs: !isMobile,
+    reducedMotion: isMobile,
+  }), [isMobile]);
 
   useEffect(() => {
     // Remove loading screen when component mounts (only once)
@@ -58,6 +115,22 @@ const PreOrder = () => {
       }
     }
   }, []);
+
+  // Track carousel slide changes
+  useEffect(() => {
+    if (!carouselApi) return;
+
+    const onSelect = () => {
+      setCurrentSlide(carouselApi.selectedScrollSnap());
+    };
+
+    carouselApi.on('select', onSelect);
+    onSelect();
+
+    return () => {
+      carouselApi.off('select', onSelect);
+    };
+  }, [carouselApi]);
   const [formData, setFormData] = useState({
     variant: "goddrip01",
     color: "black",
@@ -76,6 +149,11 @@ const PreOrder = () => {
   const handleInputChange = useCallback((field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
+
+  // Scroll to top when step changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
 
   const handleSizeToggle = useCallback((size: string, index: number) => {
     setFormData(prev => {
@@ -216,38 +294,43 @@ ${formData.country}
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: `url(${backgroundImage})`,
+            willChange: 'auto',
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/94 to-background" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(8_86%_53%_/_0.08),transparent)]" />
 
-        {/* Animated Orbs */}
-        <motion.div
-          className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/10 rounded-full"
-          style={{ filter: "blur(100px)" }}
-          animate={{
-            x: [0, 50, 0],
-            y: [0, 30, 0],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-1/4 -right-20 w-80 h-80 bg-primary/8 rounded-full"
-          style={{ filter: "blur(100px)" }}
-          animate={{
-            x: [0, -40, 0],
-            y: [0, -40, 0],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
+        {/* Animated Orbs - Only on desktop for better mobile performance */}
+        {animationConfig.enableOrbs && (
+          <>
+            <motion.div
+              className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/10 rounded-full"
+              style={{ filter: "blur(100px)", willChange: 'transform' }}
+              animate={{
+                x: [0, 50, 0],
+                y: [0, 30, 0],
+              }}
+              transition={{
+                duration: 20,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+            <motion.div
+              className="absolute bottom-1/4 -right-20 w-80 h-80 bg-primary/8 rounded-full"
+              style={{ filter: "blur(100px)", willChange: 'transform' }}
+              animate={{
+                x: [0, -40, 0],
+                y: [0, -40, 0],
+              }}
+              transition={{
+                duration: 25,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+          </>
+        )}
       </div>
 
       {/* Content */}
@@ -257,6 +340,7 @@ ${formData.country}
           className="max-w-6xl mx-auto mb-4"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: animationConfig.reducedMotion ? 0.3 : 0.5 }}
         >
           <div className="flex items-center justify-between">
             <Button
@@ -268,7 +352,7 @@ ${formData.country}
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            <img src={godmodeLogo} alt="TheGodMode" className="h-7" />
+            <img src={godmodeLogo} alt="TheGodMode" className="h-5 md:h-7" />
           </div>
         </motion.div>
 
@@ -277,7 +361,7 @@ ${formData.country}
           className="max-w-6xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: animationConfig.reducedMotion ? 0.1 : 0.2, duration: animationConfig.reducedMotion ? 0.3 : 0.5 }}
         >
           <div className="bg-background/50 backdrop-blur-sm border border-border/50 rounded-xl p-5 md:p-6 shadow-2xl">
             {/* Progress Indicator */}
@@ -326,17 +410,45 @@ ${formData.country}
             {step === 1 && (
               <motion.div
                 className="grid md:grid-cols-2 gap-6"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: animationConfig.reducedMotion ? 0 : 20 }}
                 animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: animationConfig.reducedMotion ? 0.2 : 0.3 }}
               >
-                {/* Left Column - Product Image */}
+                {/* Left Column - Product Image Carousel */}
                 <div className="flex flex-col items-center justify-center">
-                  <div className="relative w-full max-w-md aspect-square rounded-xl overflow-hidden border-2 border-primary/20 shadow-lg">
-                    <img
-                      src={tshirtImage}
-                      alt="GodDrip01 T-Shirt"
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="relative w-full max-w-md">
+                    <Carousel className="w-full" opts={{ loop: true }} setApi={setCarouselApi}>
+                      <CarouselContent>
+                        {productImages.map((image, index) => (
+                          <CarouselItem key={index}>
+                            <div className="relative w-full aspect-square rounded-xl overflow-hidden border-2 border-primary/20 shadow-lg">
+                              <ImageWithLoading
+                                src={image}
+                                alt={`GodDrip01 Product Image ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      <CarouselPrevious className="left-2" />
+                      <CarouselNext className="right-2" />
+                    </Carousel>
+                    {/* Pagination Dots */}
+                    <div className="flex justify-center gap-2 mt-4">
+                      {productImages.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => carouselApi?.scrollTo(index)}
+                          className={`h-2 rounded-full transition-all ${
+                            index === currentSlide
+                              ? "w-8 bg-primary"
+                              : "w-2 bg-primary/30 hover:bg-primary/50"
+                          }`}
+                          aria-label={`Go to slide ${index + 1}`}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -433,7 +545,13 @@ ${formData.country}
                   <Button
                     className="w-full"
                     size="lg"
-                    onClick={() => setStep(2)}
+                    onClick={() => {
+                      setStep(2);
+                      // Ensure smooth scroll to top
+                      setTimeout(() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }, 100);
+                    }}
                     disabled={!canProceedToStep2}
                   >
                     Continue to Sizes
@@ -447,19 +565,45 @@ ${formData.country}
             {step === 2 && (
               <motion.div
                 className="grid md:grid-cols-2 gap-6"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: animationConfig.reducedMotion ? 0 : 20 }}
                 animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: animationConfig.reducedMotion ? 0.2 : 0.3 }}
               >
                 {/* Left Column - Product Summary */}
                 <div className="flex flex-col justify-center space-y-4">
                   <div className="bg-background/30 rounded-xl p-5 border border-border/30">
                     <h3 className="text-lg font-bold mb-4">Order Summary</h3>
-                    <div className="relative w-full max-w-xs mx-auto aspect-square rounded-lg overflow-hidden border border-primary/20 mb-4">
-                      <img
-                        src={tshirtImage}
-                        alt="GodDrip01 T-Shirt"
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="relative w-full max-w-xs mx-auto mb-4">
+                      <Carousel className="w-full" opts={{ loop: true }}>
+                        <CarouselContent>
+                          {productImages.map((image, index) => (
+                            <CarouselItem key={index}>
+                              <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-primary/20">
+                                <ImageWithLoading
+                                  src={image}
+                                  alt={`GodDrip01 Product ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            </CarouselItem>
+                          ))}
+                        </CarouselContent>
+                        <CarouselPrevious className="left-1 h-7 w-7" />
+                        <CarouselNext className="right-1 h-7 w-7" />
+                      </Carousel>
+                      {/* Pagination Dots */}
+                      <div className="flex justify-center gap-1.5 mt-3">
+                        {productImages.map((_, index) => (
+                          <div
+                            key={index}
+                            className={`h-1.5 rounded-full transition-all ${
+                              index === currentSlide
+                                ? "w-6 bg-primary"
+                                : "w-1.5 bg-primary/30"
+                            }`}
+                          />
+                        ))}
+                      </div>
                     </div>
                     <div className="space-y-2.5 text-sm">
                       <div className="flex justify-between">
@@ -519,100 +663,132 @@ ${formData.country}
                             Size Chart
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                        <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
                           <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2">
-                              <Ruler className="w-5 h-5 text-primary" />
+                            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+                              <Ruler className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                               Size Chart - GodDrip01
                             </DialogTitle>
-                            <DialogDescription>
+                            <DialogDescription className="text-xs sm:text-sm">
                               All measurements are in inches. Measure your favorite t-shirt for best fit.
                             </DialogDescription>
                           </DialogHeader>
-                          <div className="space-y-4">
-                            {/* Size Chart Table */}
-                            <div className="overflow-x-auto">
-                              <table className="w-full border-collapse">
-                                <thead>
-                                  <tr className="bg-primary/10 border-b border-border">
-                                    <th className="text-left p-3 text-sm font-semibold">Size</th>
-                                    <th className="text-center p-3 text-sm font-semibold">Chest (in)</th>
-                                    <th className="text-center p-3 text-sm font-semibold">Length (in)</th>
-                                    <th className="text-center p-3 text-sm font-semibold">Shoulder (in)</th>
-                                    <th className="text-center p-3 text-sm font-semibold">Sleeve (in)</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  <tr className="border-b border-border hover:bg-primary/5 transition-colors">
-                                    <td className="p-3 font-semibold text-sm">S</td>
-                                    <td className="p-3 text-center text-sm">38</td>
-                                    <td className="p-3 text-center text-sm">27</td>
-                                    <td className="p-3 text-center text-sm">17</td>
-                                    <td className="p-3 text-center text-sm">8.5</td>
-                                  </tr>
-                                  <tr className="border-b border-border hover:bg-primary/5 transition-colors">
-                                    <td className="p-3 font-semibold text-sm">M</td>
-                                    <td className="p-3 text-center text-sm">40</td>
-                                    <td className="p-3 text-center text-sm">28</td>
-                                    <td className="p-3 text-center text-sm">18</td>
-                                    <td className="p-3 text-center text-sm">9</td>
-                                  </tr>
-                                  <tr className="border-b border-border hover:bg-primary/5 transition-colors">
-                                    <td className="p-3 font-semibold text-sm">L</td>
-                                    <td className="p-3 text-center text-sm">42</td>
-                                    <td className="p-3 text-center text-sm">29</td>
-                                    <td className="p-3 text-center text-sm">19</td>
-                                    <td className="p-3 text-center text-sm">9.5</td>
-                                  </tr>
-                                  <tr className="border-b border-border hover:bg-primary/5 transition-colors">
-                                    <td className="p-3 font-semibold text-sm">XL</td>
-                                    <td className="p-3 text-center text-sm">44</td>
-                                    <td className="p-3 text-center text-sm">30</td>
-                                    <td className="p-3 text-center text-sm">20</td>
-                                    <td className="p-3 text-center text-sm">10</td>
-                                  </tr>
-                                  <tr className="hover:bg-primary/5 transition-colors">
-                                    <td className="p-3 font-semibold text-sm">XXL</td>
-                                    <td className="p-3 text-center text-sm">46</td>
-                                    <td className="p-3 text-center text-sm">31</td>
-                                    <td className="p-3 text-center text-sm">21</td>
-                                    <td className="p-3 text-center text-sm">10.5</td>
-                                  </tr>
-                                </tbody>
-                              </table>
-                            </div>
+                          
+                          <div className="overflow-y-auto flex-1 -mx-6 px-6 py-4">
+                            <div className="space-y-3 sm:space-y-4">
+                              {/* Size Chart - Mobile Cards (visible on mobile only) */}
+                              <div className="sm:hidden space-y-2">
+                                {[
+                                  { size: "S", chest: 38, length: 27, shoulder: 17, sleeve: 8.5 },
+                                  { size: "M", chest: 40, length: 28, shoulder: 18, sleeve: 9 },
+                                  { size: "L", chest: 42, length: 29, shoulder: 19, sleeve: 9.5 },
+                                  { size: "XL", chest: 44, length: 30, shoulder: 20, sleeve: 10 },
+                                  { size: "XXL", chest: 46, length: 31, shoulder: 21, sleeve: 10.5 },
+                                ].map((item) => (
+                                  <div key={item.size} className="bg-background/50 border border-border rounded-lg p-3">
+                                    <div className="font-bold text-primary text-lg mb-2">Size {item.size}</div>
+                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                      <div className="flex justify-between">
+                                        <span className="text-foreground/60">Chest:</span>
+                                        <span className="font-semibold">{item.chest}"</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-foreground/60">Length:</span>
+                                        <span className="font-semibold">{item.length}"</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-foreground/60">Shoulder:</span>
+                                        <span className="font-semibold">{item.shoulder}"</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-foreground/60">Sleeve:</span>
+                                        <span className="font-semibold">{item.sleeve}"</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
 
-                            {/* How to Measure Section */}
-                            <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
-                              <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                                📏 How to Measure
-                              </h4>
-                              <div className="space-y-2 text-xs text-foreground/80">
-                                <div className="flex gap-2">
-                                  <span className="font-semibold min-w-[70px]">Chest:</span>
-                                  <span>Measure around the fullest part of your chest, keeping the tape horizontal.</span>
-                                </div>
-                                <div className="flex gap-2">
-                                  <span className="font-semibold min-w-[70px]">Length:</span>
-                                  <span>Measure from the highest point of the shoulder to the bottom hem.</span>
-                                </div>
-                                <div className="flex gap-2">
-                                  <span className="font-semibold min-w-[70px]">Shoulder:</span>
-                                  <span>Measure from one shoulder point to the other across the back.</span>
-                                </div>
-                                <div className="flex gap-2">
-                                  <span className="font-semibold min-w-[70px]">Sleeve:</span>
-                                  <span>Measure from the shoulder seam to the end of the sleeve.</span>
+                              {/* Size Chart Table - Desktop (hidden on mobile) */}
+                              <div className="hidden sm:block overflow-x-auto">
+                                <table className="w-full border-collapse">
+                                  <thead>
+                                    <tr className="bg-primary/10 border-b border-border">
+                                      <th className="text-left p-3 text-sm font-semibold">Size</th>
+                                      <th className="text-center p-3 text-sm font-semibold">Chest (in)</th>
+                                      <th className="text-center p-3 text-sm font-semibold">Length (in)</th>
+                                      <th className="text-center p-3 text-sm font-semibold">Shoulder (in)</th>
+                                      <th className="text-center p-3 text-sm font-semibold">Sleeve (in)</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <tr className="border-b border-border hover:bg-primary/5 transition-colors">
+                                      <td className="p-3 font-semibold text-sm">S</td>
+                                      <td className="p-3 text-center text-sm">38</td>
+                                      <td className="p-3 text-center text-sm">27</td>
+                                      <td className="p-3 text-center text-sm">17</td>
+                                      <td className="p-3 text-center text-sm">8.5</td>
+                                    </tr>
+                                    <tr className="border-b border-border hover:bg-primary/5 transition-colors">
+                                      <td className="p-3 font-semibold text-sm">M</td>
+                                      <td className="p-3 text-center text-sm">40</td>
+                                      <td className="p-3 text-center text-sm">28</td>
+                                      <td className="p-3 text-center text-sm">18</td>
+                                      <td className="p-3 text-center text-sm">9</td>
+                                    </tr>
+                                    <tr className="border-b border-border hover:bg-primary/5 transition-colors">
+                                      <td className="p-3 font-semibold text-sm">L</td>
+                                      <td className="p-3 text-center text-sm">42</td>
+                                      <td className="p-3 text-center text-sm">29</td>
+                                      <td className="p-3 text-center text-sm">19</td>
+                                      <td className="p-3 text-center text-sm">9.5</td>
+                                    </tr>
+                                    <tr className="border-b border-border hover:bg-primary/5 transition-colors">
+                                      <td className="p-3 font-semibold text-sm">XL</td>
+                                      <td className="p-3 text-center text-sm">44</td>
+                                      <td className="p-3 text-center text-sm">30</td>
+                                      <td className="p-3 text-center text-sm">20</td>
+                                      <td className="p-3 text-center text-sm">10</td>
+                                    </tr>
+                                    <tr className="hover:bg-primary/5 transition-colors">
+                                      <td className="p-3 font-semibold text-sm">XXL</td>
+                                      <td className="p-3 text-center text-sm">46</td>
+                                      <td className="p-3 text-center text-sm">31</td>
+                                      <td className="p-3 text-center text-sm">21</td>
+                                      <td className="p-3 text-center text-sm">10.5</td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </div>
+
+                              {/* How to Measure Section */}
+                              <div className="bg-primary/5 rounded-lg p-3 sm:p-4 border border-primary/20">
+                                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                                  📏 How to Measure
+                                </h4>
+                                <div className="space-y-1.5 text-xs text-foreground/80">
+                                  <div>
+                                    <span className="font-semibold">Chest:</span> Measure around the fullest part of your chest.
+                                  </div>
+                                  <div>
+                                    <span className="font-semibold">Length:</span> From shoulder to bottom hem.
+                                  </div>
+                                  <div>
+                                    <span className="font-semibold">Shoulder:</span> From one shoulder point to the other.
+                                  </div>
+                                  <div>
+                                    <span className="font-semibold">Sleeve:</span> From shoulder seam to sleeve end.
+                                  </div>
                                 </div>
                               </div>
-                            </div>
 
-                            {/* Fit Guide */}
-                            <div className="bg-background/50 rounded-lg p-4 border border-border/50">
-                              <h4 className="font-semibold text-sm mb-2">💡 Fit Guide</h4>
-                              <p className="text-xs text-foreground/70">
-                                This t-shirt has an oversized fit. For a relaxed, street-style look, order your true size. If you prefer a more fitted look, consider sizing down.
-                              </p>
+                              {/* Fit Guide */}
+                              <div className="bg-background/50 rounded-lg p-3 sm:p-4 border border-border/50">
+                                <h4 className="font-semibold text-sm mb-2">💡 Fit Guide</h4>
+                                <p className="text-xs text-foreground/70 leading-relaxed">
+                                  This t-shirt has an oversized fit. For a relaxed, street-style look, order your true size. If you prefer a more fitted look, consider sizing down.
+                                </p>
+                              </div>
                             </div>
                           </div>
                         </DialogContent>
@@ -620,31 +796,31 @@ ${formData.country}
                     </div>
                   </div>
 
-                  <div className="space-y-2.5 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                  <div className="space-y-2">
                     {Array.from({ length: formData.quantity }).map((_, index) => (
                       <div
                         key={index}
-                        className="bg-background/40 rounded-lg p-3 border border-border/40 hover:border-primary/40 transition-colors"
+                        className="bg-background/40 rounded-lg p-2.5 border border-border/40 hover:border-primary/40 transition-colors"
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <Label className="text-xs font-semibold">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <Label className="text-xs font-semibold text-foreground">
                             {formData.quantity > 1 ? `Item ${index + 1}` : "Your Size"}
                           </Label>
-                          <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                             formData.sizes[index] 
-                              ? "bg-primary text-primary-foreground" 
-                              : "bg-muted text-muted-foreground"
+                              ? "bg-primary/10 text-primary border border-primary/20" 
+                              : "bg-muted/30 text-muted-foreground/60"
                           }`}>
-                            {formData.sizes[index] || "Select"}
+                            {formData.sizes[index] || "—"}
                           </span>
                         </div>
-                        <div className="grid grid-cols-6 gap-1.5">
+                        <div className="grid grid-cols-5 gap-1.5">
                           {SIZES.map((size) => (
                             <Button
                               key={size}
                               type="button"
                               variant={formData.sizes[index] === size ? "default" : "outline"}
-                              className={`h-9 text-xs font-semibold transition-all ${
+                              className={`h-8 text-xs font-semibold transition-all ${
                                 formData.sizes[index] === size 
                                   ? "ring-2 ring-primary ring-offset-1 ring-offset-background" 
                                   : "hover:border-primary/50"
@@ -663,7 +839,12 @@ ${formData.country}
                     <Button
                       variant="outline"
                       size="lg"
-                      onClick={() => setStep(1)}
+                      onClick={() => {
+                        setStep(1);
+                        setTimeout(() => {
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }, 100);
+                      }}
                       className="flex-1"
                     >
                       <ArrowLeft className="w-4 h-4 mr-2" />
@@ -671,7 +852,12 @@ ${formData.country}
                     </Button>
                     <Button
                       size="lg"
-                      onClick={() => setStep(3)}
+                      onClick={() => {
+                        setStep(3);
+                        setTimeout(() => {
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }, 100);
+                      }}
                       disabled={!canProceedToStep3}
                       className="flex-1"
                     >
@@ -687,8 +873,9 @@ ${formData.country}
             {step === 3 && (
               <motion.div
                 className="grid md:grid-cols-2 gap-6"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: animationConfig.reducedMotion ? 0 : 20 }}
                 animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: animationConfig.reducedMotion ? 0.2 : 0.3 }}
               >
                 {/* Left Column - Order Summary & Payment */}
                 <div className="space-y-4">
@@ -743,7 +930,7 @@ ${formData.country}
                       <p className="text-xs text-foreground/60">Scan QR Code to Pay via UPI</p>
                       <div className="flex justify-center">
                         <div className="w-56 h-56 bg-white rounded-lg overflow-hidden shadow-lg">
-                          <img
+                          <ImageWithLoading
                             src={qrCodeImage}
                             alt="UPI QR Code"
                             className="w-full h-full object-contain"
@@ -887,7 +1074,13 @@ ${formData.country}
                     <Button
                       variant="outline"
                       size="lg"
-                      onClick={() => setStep(2)}
+                      onClick={() => {
+                        setStep(2);
+                        setTimeout(() => {
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }, 100);
+                      }}
+                      disabled={isSubmitting}
                       className="flex-1"
                     >
                       <ArrowLeft className="w-4 h-4 mr-2" />
@@ -899,8 +1092,17 @@ ${formData.country}
                       disabled={!canSubmit || isSubmitting}
                       className="flex-1 bg-green-600 hover:bg-green-700"
                     >
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      {isSubmitting ? "Processing..." : "Confirm"}
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <MessageCircle className="w-4 h-4 mr-2" />
+                          Confirm
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>

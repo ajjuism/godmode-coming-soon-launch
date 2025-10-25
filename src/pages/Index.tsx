@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { MessageCircle, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import backgroundImage from "@/assets/background.png";
 
 const godmodeLogo = "/godmode-logo-svg 1.png";
@@ -11,6 +12,14 @@ const Index = () => {
   const navigate = useNavigate();
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const loadingScreenRemoved = useRef(false);
+  const isMobile = useIsMobile();
+  
+  // Reduce animation complexity on mobile
+  const animationConfig = useMemo(() => ({
+    enableGlitch: true, // Keep glitch animation on all devices
+    enableOrbs: !isMobile, // Only disable orbs on mobile for performance
+    reducedMotion: isMobile,
+  }), [isMobile]);
 
   useEffect(() => {
     // Preload critical images
@@ -70,6 +79,7 @@ const Index = () => {
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ 
             backgroundImage: `url(${backgroundImage})`,
+            willChange: 'auto',
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/94 to-background" />
@@ -77,33 +87,37 @@ const Index = () => {
         {/* Mesh Gradient Overlay */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(8_86%_53%_/_0.08),transparent)]" />
         
-        {/* Animated Orbs */}
-        <motion.div 
-          className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/10 rounded-full"
-          style={{ filter: 'blur(100px)' }}
-          animate={{
-            x: [0, 50, 0],
-            y: [0, 30, 0],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div 
-          className="absolute bottom-1/4 -right-20 w-80 h-80 bg-primary/8 rounded-full"
-          style={{ filter: 'blur(100px)' }}
-          animate={{
-            x: [0, -40, 0],
-            y: [0, -40, 0],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
+        {/* Animated Orbs - Only on desktop for better mobile performance */}
+        {animationConfig.enableOrbs && (
+          <>
+            <motion.div 
+              className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/10 rounded-full"
+              style={{ filter: 'blur(100px)', willChange: 'transform' }}
+              animate={{
+                x: [0, 50, 0],
+                y: [0, 30, 0],
+              }}
+              transition={{
+                duration: 20,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+            <motion.div 
+              className="absolute bottom-1/4 -right-20 w-80 h-80 bg-primary/8 rounded-full"
+              style={{ filter: 'blur(100px)', willChange: 'transform' }}
+              animate={{
+                x: [0, -40, 0],
+                y: [0, -40, 0],
+              }}
+              transition={{
+                duration: 25,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          </>
+        )}
       </div>
 
       {/* Content */}
@@ -120,27 +134,29 @@ const Index = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ 
-              duration: 1.2, 
+              duration: animationConfig.reducedMotion ? 0.6 : 1.2, 
               ease: [0.16, 1, 0.3, 1],
               delay: 0.2 
             }}
             className="relative cursor-pointer group"
             onMouseEnter={() => {}}
           >
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-b from-primary/20 via-transparent to-transparent rounded-full"
-              style={{ filter: 'blur(60px)' }}
-              animate={{
-                opacity: [0.3, 0.5, 0.3],
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
+            {!animationConfig.reducedMotion && (
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-b from-primary/20 via-transparent to-transparent rounded-full"
+                style={{ filter: 'blur(60px)', willChange: 'opacity' }}
+                animate={{
+                  opacity: [0.3, 0.5, 0.3],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+            )}
             
-            {/* Logo with Glitch Effect */}
+            {/* Logo with Glitch Effect - Available on all devices */}
             <div className="relative">
               {/* Red/Magenta Glitch Layer */}
               <motion.img 
@@ -150,7 +166,8 @@ const Index = () => {
                 style={{ 
                   mixBlendMode: 'screen',
                   filter: 'hue-rotate(-40deg) saturate(4) brightness(1.3) contrast(1.2)',
-                  opacity: 0
+                  opacity: 0,
+                  willChange: 'transform, opacity'
                 }}
                 decoding="async"
                 loading="eager"
@@ -175,7 +192,8 @@ const Index = () => {
                 style={{ 
                   mixBlendMode: 'screen',
                   filter: 'hue-rotate(40deg) saturate(4) brightness(1.3) contrast(1.2)',
-                  opacity: 0
+                  opacity: 0,
+                  willChange: 'transform, opacity'
                 }}
                 decoding="async"
                 loading="eager"
@@ -200,7 +218,8 @@ const Index = () => {
                 style={{ 
                   mixBlendMode: 'screen',
                   filter: 'hue-rotate(100deg) saturate(3.5) brightness(1.2)',
-                  opacity: 0
+                  opacity: 0,
+                  willChange: 'transform, opacity'
                 }}
                 decoding="async"
                 loading="eager"
@@ -222,9 +241,14 @@ const Index = () => {
                 src={godmodeLogo} 
                 alt="TheGodMode Logo" 
                 className="relative mx-auto w-full max-w-[200px] md:max-w-[260px] h-auto drop-shadow-2xl"
-                style={{ filter: 'drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5))' }}
+                style={{ 
+                  filter: 'drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5))',
+                  willChange: 'transform, filter'
+                }}
                 decoding="async"
                 loading="eager"
+                width="260"
+                height="auto"
                 animate={{
                   x: [0, 0, 0, 2, 0, -1, 0, 0, 0],
                   skewX: [0, 0, 0, 1, 0, -0.5, 0, 0, 0],
