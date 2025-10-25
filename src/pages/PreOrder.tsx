@@ -232,6 +232,11 @@ Color: ${formData.color}
 Quantity: ${formData.quantity}
 Sizes: ${formData.sizes.slice(0, formData.quantity).join(", ")}
 
+💰 *Pricing:*
+Subtotal: ₹${priceCalculations.subtotal}
+Shipping: ₹${SHIPPING_COST.toFixed(2)}
+Total Amount: ₹${priceCalculations.total}
+
 📍 *Shipping Address:*
 ${formData.name}
 ${formData.street}
